@@ -1,0 +1,9 @@
+[package]
+name = "workshop"
+version = "0.1.0"
+authors = ["Nerijus Arlauskas <nercury@gmail.com>"]
+
+[dependencies]
+serde = "0.8"
+serde_json = "0.8"
+hyper = { version = "0.9", default-features = false, features = ["security-framework"] }
