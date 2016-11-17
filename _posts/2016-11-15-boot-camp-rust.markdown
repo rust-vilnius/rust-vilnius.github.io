@@ -27,6 +27,8 @@ We will learn:
 - Basic closures
 - Iterator usage
 
+List of steps:
+
 * auto-gen TOC:
 {:toc}
 
