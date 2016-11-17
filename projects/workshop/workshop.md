@@ -1,7 +1,7 @@
 * auto-gen TOC:
 {:toc}
 
-# println! macro
+## println! macro
 
 ```rust
 /// This is a function, it is named main, that's how rust knows where to start.
@@ -11,7 +11,7 @@ fn main() {
 }
 ```
 
-# variable bindings
+## variable bindings
 
 ```rust
 fn main() {
@@ -26,13 +26,13 @@ fn main() {
 }
 ```
 
-# string format
+## string format
 
 ```rust
 fn main() {
     let number = 42;
     let text = "Number";
-    
+
     // Why? The println! can also format strings, and checks if
     // the number of placeholders match the number or passed arguments
     println!("{} is {}", text, number); // OK
@@ -43,7 +43,25 @@ fn main() {
 }
 ```
 
-# variable type
+## mutable variable bindings
+
+```rust
+fn main() {
+    // To make mutation possible, add "mut" keyword
+    let mut number = 42;
+    let mut text = "Number";
+
+    println!("{} is {}", text, number); // OK
+
+    // Then we can assign other values
+    number = 43;
+    text = "Value";
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## variable type
 
 ```rust
 fn main() {
@@ -55,7 +73,7 @@ fn main() {
 }
 ```
 
-# finding out the type
+## finding out the type
 
 ```rust
 fn main() {
@@ -77,7 +95,7 @@ fn main() {
 }
 ```
 
-# 'static memory
+## 'static memory
 
 ```rust
 fn main() {
@@ -96,9 +114,11 @@ fn main() {
 
     println!("{} is {}", text, number);
 }
+```
 
-/// # reference lifetime inference
+## reference lifetime inference
 
+```rust
 fn main() {
     let number: i64 = 42;
     let text: &str = "Number"; // We can skip 'static from reference name, Rust can infer that
@@ -113,12 +133,14 @@ fn main() {
 }
 ```
 
-# String
+## String
 
 ```rust
 fn main() {
     let number: i64 = 42;
-    let text: String = String::from("Number"); // Enter "String" type
+    let mut text: String = String::from("Number"); // Enter "String" type
+    
+    text.push_str(" Value");
 
     // Stores string contents on the heap, can be created from string literal
     // How does Rust clean up memory for it? Same way as for "number", at the end of the scope
@@ -127,7 +149,179 @@ fn main() {
 }
 ```
 
-# Ownership
+## References
+
+```rust
+fn main() {
+    let number = 42;
+    let text = String::from("Number");
+
+    let text_ref = &text; // create &String reference to String _container_
+    println!("{} is {}", text_ref, number); // OK
+
+    // Prints "Number is 42"
+
+    let text_ref = &text[0..3]; // create &str reference to string contents from [0 to 3)
+    println!("{} is {}", text_ref, number); // OK
+
+    // Prints "Num is 42"
+
+    let text_ref = &text[..]; // create &str reference to the whole String
+    println!("{} is {}", text_ref, number); // OK
+
+    // Prints "Number is 42"
+
+    // We can have as many immutable references as we like
+}
+```
+
+## Mutable references
+
+```rust
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // The references can be _uniquely mutable_, that is, while they are in scope
+    // the original value can't be read or changed
+
+    let text_ref = &mut text;
+    text_ref.push_str(" Value");
+
+    // can not read:
+    // cannot borrow `text` as immutable because it is also borrowed as mutable
+    println!("{} is {}", text, number);
+
+    // can not change:
+    // cannot borrow `text` as mutable more than once at a time
+    text.push_str("abc");
+
+    // text_ref active until _here_
+}
+```
+
+## reference lifetime
+
+```rust
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // The scope of mutable borrow can be reduced by creating a block
+
+    {
+        let text_ref = &mut text;
+        text_ref.push_str(" Value");
+    }
+
+    println!("{} is {}", text, number); // OK
+
+    text.push_str("abc"); // OK
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## functions that borrow
+
+```rust
+// let's move that scope into a function
+fn append_to_string(text: &mut String) {
+    text.push_str(" Value");
+}
+
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // borrow that lasts only as long as function this way
+    append_to_string(&mut text);
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## multiple references in function arguments
+
+```rust
+// let's make a function where we pass the appended string over the argument
+fn append_to_string(text: &mut String, what: &str) {
+    text.push_str(what);
+}
+
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // pass the argument here
+    append_to_string(&mut text, " Value");
+    
+    // it works!
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## let's try to pass reference to the same text as second argument
+
+```rust
+// let's make a function where we pass the appended string over the argument
+fn append_to_string(text: &mut String, what: &str) {
+    text.push_str(what);
+}
+
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // now we get the infamous error
+    // cannot borrow `text` as immutable because it is also borrowed as mutable
+    append_to_string(&mut text, &text);
+    //                    ----   ^^^^- mutable borrow ends here
+    //                    |      |
+    //                    |      immutable borrow occurs here
+    //                    mutable borrow occurs here
+    
+    // question: why this would be bad?
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## universal function call syntax
+
+```rust
+fn main() {
+    let number = 42;
+    let mut text = String::from("Number");
+
+    // it's the same error we would get when doing that directly on text
+    text.push_str(&text);
+//  ----           ^^^^- mutable borrow ends here
+//  |              |
+//  |              immutable borrow occurs here
+//  mutable borrow occurs here
+
+    // if you look at 
+    // fn push_str(&mut self, string: &str); 
+    // signature, it takes mutably borrowed "self"
+    // as first argument
+    
+    // it is the same as calling
+    String::push_str(&mut text, &text);
+    //                    ----   ^^^^- mutable borrow ends here
+    //                    |      |
+    //                    |      immutable borrow occurs here
+    //                    mutable borrow occurs here
+    
+    // rust borrows automatically when calling methods that 
+    // use borrowed &self or &mut self
+
+    println!("{} is {}", text, number); // OK
+}
+```
+
+## variable assignments
 
 ```rust
 fn main() {
@@ -146,7 +340,7 @@ fn main() {
 }
 ```
 
-# Ownership II
+## error using moved value
 
 ```rust
 fn main() {
@@ -176,7 +370,7 @@ fn main() {
 }
 ```
 
-# Ownership III
+## difference between Copy and non-Copy
 
 ```rust
 fn main() {
@@ -195,7 +389,7 @@ fn main() {
 }
 ```
 
-# Ownership IV
+## method .clone
 
 ```rust
 fn main() {
@@ -220,98 +414,10 @@ fn main() {
 }
 ```
 
-# Borrowing
+## struct
 
 ```rust
-fn main() {
-    let number = 42;
-    let text = String::from("Number");
-
-    let text_ref = &text; // create &String reference to String _container_
-    println!("{} is {}", text_ref, number); // OK
-
-    // Prints "Number is 42"
-
-    let text_ref = &text[0..3]; // create &str reference to string contents from [0 to 3)
-    println!("{} is {}", text_ref, number); // OK
-
-    // Prints "Num is 42"
-
-    let text_ref = &text[..]; // create &str reference to the whole String
-    println!("{} is {}", text_ref, number); // OK
-
-    // Prints "Number is 42"
-
-    // We can have as many immutable references as we like
-}
-```
-
-# Mutable bindings
-
-```rust
-fn main() {
-    let number = 42;
-    let mut text = String::from("Number");
-
-    // We use String and pass it around so that we can mutate it
-
-    text.push_str(" really");
-
-    println!("{} is {}", text, number);
-}
-```
-
-# Mutable references
-
-```rust
-fn main() {
-    let number = 42;
-    let mut text = String::from("Number");
-
-    // The references can be _uniquely mutable_, that is, while they are in scope
-    // the original value can't be read or changed
-
-    let text_ref = &mut text;
-    text_ref.push_str(" really");
-
-    // can not read:
-    // cannot borrow `text` as immutable because it is also borrowed as mutable
-    println!("{} is {}", text, number);
-
-    // can not change:
-    // cannot borrow `text` as mutable more than once at a time
-    text.push_str("abc");
-
-    // text_ref active until _here_
-}
-```
-
-# Scoped lifetime
-
-```rust
-fn main() {
-    let number = 42;
-    let mut text = String::from("Number");
-
-    // The scope of mutable borrow can be reduced by creating a block
-
-    {
-        let text_ref = &mut text;
-        text_ref.push_str(" really");
-    }
-
-    println!("{} is {}", text, number); // OK
-
-    text.push_str("abc"); // OK
-
-    println!("{} is {}", text, number); // OK
-}
-```
-
-# struct
-
-```rust
-pub struct Page {
+struct Page {
     id: i64,
     title: String,
 }
@@ -328,10 +434,10 @@ fn main() {
 }
 ```
 
-# constructor and returning values from functions
+## constructor and returning values from functions
 
 ```rust
-pub struct Page {
+struct Page {
     id: i64,
     title: String,
 }
@@ -353,73 +459,18 @@ fn main() {
 }
 ```
 
-# static lifetime
+## implementing Display trait
 
 ```rust
-pub struct Page {
-    id: i64,
-    title: String,
-}
+// if we try to `println!("Page: {}", page);` we will find it does not implement
+// `Display` trait.
 
-impl Page {
-    // there is only one specific lifetime name, and it's 'static
-    // we know that "Hello" is in 'static memory, so we can make this method disallow
-    // anything from shorter scope
-    fn new(id: i64, title: &'static str) -> Page {
-        Page {
-            id: id,
-            title: String::from(title),
-        }
-    }
-}
+// So, what are traits and how do we implement them?
 
-fn main() {
-    // this still works
-    let page = Page::new(12, "Hello");
+// This particular trait lives in fmt module that we can use.
+use std::fmt;
 
-    // however a reference to memory in shorter scope does not
-    let title = String::from("Bye");
-
-    // take a reference to string contents (effectively a pointer)
-    let page = Page::new(12, &title[..]); // error: `title` does not live long enough
-    //                        ^^^^^ does not live long enough
-
-    println!("Page id: {}, title: {}", page.id, page.title);
-}
-```
-
-# generic lifetime
-
-```rust
-pub struct Page {
-    id: i64,
-    title: String,
-}
-
-impl Page {
-    // the default "behind the scenes" behavior is to make reference generic over the scope
-    // whe reference points to
-    fn new<'a>(id: i64, title: &'a str) -> Page {
-        // this is elided and there is usually no need to do this manually
-        // but is much easier to introduce here :)
-        Page {
-            id: id,
-            title: String::from(title),
-        }
-    }
-}
-
-fn main() {
-    let page = Page::new(12, "Hello");
-
-    println!("Page id: {}, title: {}", page.id, page.title);
-}
-```
-
-# generic lifetime
-
-```rust
-pub struct Page {
+struct Page {
     id: i64,
     title: String,
 }
@@ -433,26 +484,53 @@ impl Page {
     }
 }
 
-impl fmt::Display for Point {
+// If we open `Display` documentation, we will find example
+// implementation for Point which we can modify to work for `Page`
+impl fmt::Display for Page {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {})", self.x, self.y)
-    }
-}
-
-impl<'a> From<(i64, &'a str)> for Page {
-    fn from((id, title): (i64, &str)) -> Self {
-        Page::new(id, title)
+        write!(f, "({}, {})", self.id, self.title)
     }
 }
 
 fn main() {
     let page = Page::new(12, "Hello");
 
+    // and now displaying page works!
     println!("Page: {}", page);
 }
 ```
 
-# Final
+## the Debug trait and derive
+
+```rust
+// There is a way to avoid this boilerplate by using derive attribute.
+// But there is another trait for that, `Debug`, which is for programmer centric output.
+// You could implement Debug the same way as `Display`, but there is a #[derive] syntax for that.
+
+#[derive(Debug)]
+struct Page {
+    id: i64,
+    title: String,
+}
+
+impl Page {
+    fn new(id: i64, title: &str) -> Page {
+        Page {
+            id: id,
+            title: String::from(title),
+        }
+    }
+}
+
+fn main() {
+    let page = Page::new(12, "Hello");
+
+    // and use {:?} syntax to print Debug output.
+    println!("{:?}", page);
+}
+```
+
+## Final
 
 ```rust
 extern crate serde_json;
