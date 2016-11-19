@@ -16,7 +16,7 @@
 title: Rust Vilnius
 email: rustvilnius@gmail.com
 description: > # this means to ignore newlines until "baseurl:"
-  You are in the Rust Vilnius community site.
+  Rust Vilnius community site.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: rustvilnius

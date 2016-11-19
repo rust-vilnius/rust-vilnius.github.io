@@ -1,7 +1,7 @@
 ---
 layout: page
 title: Help
-permalink: /about/
+permalink: /help/
 ---
 
 ## Playground
